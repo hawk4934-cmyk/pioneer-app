@@ -1,0 +1,18 @@
+{
+  "name": "파이오니아 봉사기록",
+  "short_name": "봉사기록",
+  "description": "정규 파이오니아 봉사시간 및 관심자 관리",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
