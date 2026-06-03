@@ -561,10 +561,26 @@ function addRecord(){
 
 // ── 월별 기록 ──
 function buildMonthSelect(){
-  const sel=document.getElementById('month-select');sel.innerHTML='';
-  const now=new Date(),sy=getServiceYear(now),sms=getServiceMonths(sy);
+  const sel=document.getElementById('month-select');
+  const curVal=sel.value;
+  sel.innerHTML='';
+  const now=new Date();
   const curKey=now.getFullYear()+'-'+pad(now.getMonth()+1);
-  sms.forEach(sm=>{const key=sm.year+'-'+pad(sm.month);const o=document.createElement('option');o.value=key;o.textContent=sm.month+'월';if(key===curKey)o.selected=true;sel.appendChild(o)});
+  // 실제 기록된 월 + 현재 월 수집
+  const recs=loadRec();
+  const monthSet=new Set(recs.map(r=>getMonthKey(r.date)));
+  monthSet.add(curKey);
+  // 내림차순 정렬 (최신월 먼저)
+  const months=[...monthSet].sort().reverse();
+  months.forEach(key=>{
+    const parts=key.split('-');
+    const y=parts[0],m=parts[1];
+    const o=document.createElement('option');
+    o.value=key;
+    o.textContent=y+'년 '+parseInt(m)+'월';
+    if(key===(curVal||curKey))o.selected=true;
+    sel.appendChild(o);
+  });
 }
 function renderRecords(){
   buildMonthSelect();
