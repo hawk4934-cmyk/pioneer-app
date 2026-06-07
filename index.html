@@ -144,13 +144,17 @@ html,body{height:100%;background:var(--bg);color:var(--text1);font-family:-apple
         </div>
         <div class="metric"><div class="label">봉사시간</div><div class="val" id="d-service">0h 0m</div></div>
         <div class="metric"><div class="label">LDC 시간</div><div class="val" id="d-ldc">0h 0m</div></div>
-        <div class="metric"><div class="label">학교(교육)</div><div class="val" id="d-edu">0h 0m</div></div>
+        <div class="metric"><div class="label">P학교</div><div class="val" id="d-edu">0h 0m</div></div>
         <div class="metric"><div class="label">총 연구 수</div><div class="val" id="d-study">0</div><div class="sub">건</div></div>
         <div class="metric full">
           <div class="label">이달 부족/잉여</div>
           <div class="val" id="d-diff">-</div>
         </div>
       </div>
+      <button onclick="shareMonthReport()" style="display:flex;align-items:center;gap:8px;width:100%;padding:12px 14px;background:var(--green-bg, #e1f5ee);color:var(--green-text, #0F6E56);border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:14px;justify-content:center;">
+        <svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        당월 보고서 공유
+      </button>
       <div class="sec-title">봉사연도 누계 (9월~8월)</div>
       <div class="metric-grid">
         <div class="metric"><div class="label">연누계 총시간</div><div class="val" id="d-yearly">0h</div></div>
@@ -206,7 +210,7 @@ html,body{height:100%;background:var(--bg);color:var(--text1);font-family:-apple
         <div class="form-row"><label>LDC 메모</label><input type="text" id="f-ldc-memo" placeholder="LDC 내용 메모"></div>
         <!-- 학교 -->
         <div class="form-row">
-          <label>학교(교육) 시간</label>
+          <label>P학교 시간</label>
           <div class="time-input">
             <select id="f-edu-h"></select>
             <span class="time-sep">시간</span>
@@ -214,7 +218,7 @@ html,body{height:100%;background:var(--bg);color:var(--text1);font-family:-apple
             <span class="time-sep">분</span>
           </div>
         </div>
-        <div class="form-row"><label>교육 메모</label><input type="text" id="f-edu-memo" placeholder="교육 메모"></div>
+        <div class="form-row"><label>P학교 메모</label><input type="text" id="f-edu-memo" placeholder="P학교 메모"></div>
         <!-- 연구 -->
         <div class="form-row">
           <label>연구 수 (건)</label>
@@ -238,7 +242,7 @@ html,body{height:100%;background:var(--bg);color:var(--text1);font-family:-apple
           <div><span style="font-size:11px;color:var(--text2);">총시간</span><div id="ms-total" style="font-size:16px;font-weight:700;"></div></div>
           <div><span style="font-size:11px;color:var(--text2);">봉사</span><div id="ms-service" style="font-size:16px;font-weight:700;"></div></div>
           <div><span style="font-size:11px;color:var(--text2);">LDC</span><div id="ms-ldc" style="font-size:15px;font-weight:600;"></div></div>
-          <div><span style="font-size:11px;color:var(--text2);">학교</span><div id="ms-edu" style="font-size:15px;font-weight:600;"></div></div>
+          <div><span style="font-size:11px;color:var(--text2);">P학교</span><div id="ms-edu" style="font-size:15px;font-weight:600;"></div></div>
           <div><span style="font-size:11px;color:var(--text2);">연구</span><div id="ms-study" style="font-size:15px;font-weight:600;"></div></div>
           <div><span style="font-size:11px;color:var(--text2);">목표대비</span><div id="ms-diff" style="font-size:15px;font-weight:600;"></div></div>
         </div>
@@ -504,6 +508,29 @@ function showPage(id){
 function hideDetails(){document.querySelectorAll('.detail-page').forEach(p=>p.classList.remove('active'))}
 
 // ── 대시보드 ──
+function shareMonthReport(){
+  const now=new Date();
+  const key=now.getFullYear()+'-'+pad(now.getMonth()+1);
+  const ms=sumMonth(loadRec(),key);
+  const y=key.split('-')[0],m=parseInt(key.split('-')[1]);
+  const people=loadPeople();
+  const rc=people.filter(p=>p.type==='연구').length;
+  const consideration=ms.ldc+ms.edu;
+  var R='\n';
+  var lines=[];
+  lines.push('[봉사보고] '+y+'년 '+m+'월');
+  lines.push('총 봉사시간: '+fmtTime(ms.service));
+  if(consideration>0){
+    lines.push('총 고려시간: '+fmtTime(consideration));
+    if(ms.ldc)lines.push('  LDC: '+fmtTime(ms.ldc));
+    if(ms.edu)lines.push('  P학교: '+fmtTime(ms.edu));
+  }
+  if(rc)lines.push('연구: '+rc+'건');
+  var text=lines.join(R);
+  if(navigator.share){navigator.share({text:text})}
+  else if(navigator.clipboard){navigator.clipboard.writeText(text).then(()=>alert('클립보드에 복사됐어요!\n카카오톡이나 문자에 붙여넣기 하세요.'))}
+}
+
 function renderDashboard(){
   const recs=loadRec(),people=loadPeople(),now=new Date();
   const curKey=now.getFullYear()+'-'+pad(now.getMonth()+1);
@@ -639,7 +666,7 @@ function renderRecords(){
             </div>`:''}
             <!-- 학교 -->
             ${eMin?`<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-              <span class="badge b-edu" style="font-size:10px;min-width:36px;text-align:center;">학교</span>
+              <span class="badge b-edu" style="font-size:10px;min-width:36px;text-align:center;">P학교</span>
               <span style="font-size:14px;font-weight:600;">${fmtTime(eMin)}</span>
               ${r.eduMemo?`<span style="font-size:12px;color:var(--text2);">${r.eduMemo}</span>`:''}
             </div>`:''}
