@@ -59,8 +59,8 @@ html,body{height:100%;background:var(--bg);color:var(--text1);font-family:-apple
 .card{background:var(--bg);border:.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px}
 .form-row{margin-bottom:13px}
 .form-row label{display:block;font-size:12px;color:var(--text2);margin-bottom:6px}
-.form-row input,.form-row select,.form-row textarea{width:100%;padding:10px 12px;font-size:15px;border:.5px solid var(--border2);border-radius:10px;background:var(--bg2);color:var(--text1);font-family:inherit;appearance:none;-webkit-appearance:none}
-.form-row textarea{resize:none;height:80px;line-height:1.5}
+.form-row input,.form-row select,.form-row textarea{width:100%;padding:13px 14px;font-size:17px;border:.5px solid var(--border2);border-radius:10px;background:var(--bg2);color:var(--text1);font-family:inherit;appearance:none;-webkit-appearance:none}
+.form-row textarea{resize:none;height:90px;line-height:1.6}
 .fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .btn-primary{width:100%;padding:14px;background:var(--primary);color:var(--bg);border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px;font-family:inherit}
@@ -120,7 +120,7 @@ html,body{height:100%;background:var(--bg);color:var(--text1);font-family:-apple
 
 /* ── 시간 입력 ── */
 .time-input{display:flex;align-items:center;gap:6px}
-.time-input select{flex:1;padding:10px 8px;font-size:15px;border:.5px solid var(--border2);border-radius:10px;background:var(--bg2);color:var(--text1);font-family:inherit;-webkit-appearance:none;text-align:center}
+.time-input select,.time-input input{flex:1;padding:13px 8px;font-size:18px;font-weight:600;border:.5px solid var(--border2);border-radius:10px;background:var(--bg2);color:var(--text1);font-family:inherit;-webkit-appearance:none;text-align:center}
 .time-sep{font-size:16px;font-weight:600;color:var(--text2);flex-shrink:0}
 </style>
 </head>
@@ -169,7 +169,7 @@ html,body{height:100%;background:var(--bg);color:var(--text1);font-family:-apple
 
     <!-- 기록 추가 -->
     <div id="page-add" class="page">
-      <div class="sec-title">봉사 기록 추가</div>
+      <div class="sec-title" id="add-page-title">봉사 기록 추가</div>
 
       <!-- 달력 -->
       <div class="cal-wrap">
@@ -191,9 +191,9 @@ html,body{height:100%;background:var(--bg);color:var(--text1);font-family:-apple
         <div class="form-row">
           <label>봉사시간</label>
           <div class="time-input">
-            <select id="f-service-h"></select>
+            <input type="number" id="f-service-h" min="0" max="23" inputmode="numeric" placeholder="0">
             <span class="time-sep">시간</span>
-            <select id="f-service-m"></select>
+            <input type="number" id="f-service-m" min="0" max="59" inputmode="numeric" placeholder="0">
             <span class="time-sep">분</span>
           </div>
         </div>
@@ -201,9 +201,9 @@ html,body{height:100%;background:var(--bg);color:var(--text1);font-family:-apple
         <div class="form-row">
           <label>LDC 시간</label>
           <div class="time-input">
-            <select id="f-ldc-h"></select>
+            <input type="number" id="f-ldc-h" min="0" max="23" inputmode="numeric" placeholder="0">
             <span class="time-sep">시간</span>
-            <select id="f-ldc-m"></select>
+            <input type="number" id="f-ldc-m" min="0" max="59" inputmode="numeric" placeholder="0">
             <span class="time-sep">분</span>
           </div>
         </div>
@@ -212,9 +212,9 @@ html,body{height:100%;background:var(--bg);color:var(--text1);font-family:-apple
         <div class="form-row">
           <label>P학교 시간</label>
           <div class="time-input">
-            <select id="f-edu-h"></select>
+            <input type="number" id="f-edu-h" min="0" max="23" inputmode="numeric" placeholder="0">
             <span class="time-sep">시간</span>
-            <select id="f-edu-m"></select>
+            <input type="number" id="f-edu-m" min="0" max="59" inputmode="numeric" placeholder="0">
             <span class="time-sep">분</span>
           </div>
         </div>
@@ -225,7 +225,8 @@ html,body{height:100%;background:var(--bg);color:var(--text1);font-family:-apple
           <input type="number" id="f-study" min="0" step="1" placeholder="0" inputmode="numeric">
         </div>
         <div class="form-row"><label>메모</label><textarea id="f-memo" placeholder="기타 메모..."></textarea></div>
-        <button class="btn-primary" onclick="addRecord()">저장</button>
+        <button class="btn-primary" id="add-record-btn" onclick="addRecord()">저장</button>
+        <button class="btn-sm" id="cancel-edit-btn" onclick="cancelEditRecord()" style="display:none;width:100%;justify-content:center;margin-top:8px;">취소</button>
       </div>
     </div>
 
@@ -412,19 +413,9 @@ function sumMonth(recs,ym){
   },{service:0,ldc:0,edu:0,study:0,total:0})
 }
 
-// ── 시간/분 셀렉트 생성 ──
-function buildTimeSelects(){
-  ['f-service-h','f-ldc-h','f-edu-h'].forEach(id=>{
-    const sel=document.getElementById(id);sel.innerHTML='';
-    for(let i=0;i<=23;i++){const o=document.createElement('option');o.value=i;o.textContent=i;sel.appendChild(o)}
-  });
-  ['f-service-m','f-ldc-m','f-edu-m'].forEach(id=>{
-    const sel=document.getElementById(id);sel.innerHTML='';
-    for(let i=0;i<60;i+=5){const o=document.createElement('option');o.value=i;o.textContent=pad(i);sel.appendChild(o)}
-  });
-}
+// ── 시간 입력 초기화 ──
 function resetTimeInputs(){
-  ['f-service-h','f-service-m','f-ldc-h','f-ldc-m','f-edu-h','f-edu-m'].forEach(id=>document.getElementById(id).value=0);
+  ['f-service-h','f-service-m','f-ldc-h','f-ldc-m','f-edu-h','f-edu-m'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-study').value='';
   ['f-ldc-memo','f-edu-memo','f-memo'].forEach(id=>document.getElementById(id).value='');
 }
@@ -562,12 +553,14 @@ function renderDashboard(){
   document.getElementById('header-period').textContent=sy2+'~'+(sy2+1)+' 봉사연도';
 }
 
-// ── 기록 저장 ──
+// ── 기록 저장/수정 ──
+let editingRecordIdx=null;
+
 function addRecord(){
   if(!selectedDate){alert('날짜를 선택해주세요');return}
-  const serviceMin=toMin(+document.getElementById('f-service-h').value,+document.getElementById('f-service-m').value);
-  const ldcMin=toMin(+document.getElementById('f-ldc-h').value,+document.getElementById('f-ldc-m').value);
-  const eduMin=toMin(+document.getElementById('f-edu-h').value,+document.getElementById('f-edu-m').value);
+  const serviceMin=toMin(+document.getElementById('f-service-h').value||0,+document.getElementById('f-service-m').value||0);
+  const ldcMin=toMin(+document.getElementById('f-ldc-h').value||0,+document.getElementById('f-ldc-m').value||0);
+  const eduMin=toMin(+document.getElementById('f-edu-h').value||0,+document.getElementById('f-edu-m').value||0);
   if(serviceMin+ldcMin+eduMin===0&&!document.getElementById('f-study').value){
     alert('최소 하나의 시간 또는 연구 수를 입력해주세요');return
   }
@@ -579,12 +572,53 @@ function addRecord(){
     study:parseInt(document.getElementById('f-study').value)||0,
     memo:document.getElementById('f-memo').value
   };
-  const recs=loadRec();recs.push(r);saveRec(recs);
-  resetTimeInputs();
-  renderCal();
-  alert('저장되었습니다!');
-  showPage('dashboard');
+  const recs=loadRec();
+  if(editingRecordIdx!==null){
+    recs[editingRecordIdx]=r;
+    saveRec(recs);
+    cancelEditRecord();
+    renderCal();
+    alert('수정되었습니다!');
+    showPage('records');
+  } else {
+    recs.push(r);saveRec(recs);
+    resetTimeInputs();
+    renderCal();
+    alert('저장되었습니다!');
+    showPage('dashboard');
+  }
 }
+
+function editRecord(idx){
+  const recs=loadRec();
+  const r=recs[idx];
+  if(!r)return;
+  editingRecordIdx=idx;
+  selectedDate=r.date;
+  document.getElementById('f-service-h').value=Math.floor((r.serviceMin||0)/60)||'';
+  document.getElementById('f-service-m').value=(r.serviceMin||0)%60||'';
+  document.getElementById('f-ldc-h').value=Math.floor((r.ldcMin||0)/60)||'';
+  document.getElementById('f-ldc-m').value=(r.ldcMin||0)%60||'';
+  document.getElementById('f-edu-h').value=Math.floor((r.eduMin||0)/60)||'';
+  document.getElementById('f-edu-m').value=(r.eduMin||0)%60||'';
+  document.getElementById('f-ldc-memo').value=r.ldcMemo||'';
+  document.getElementById('f-edu-memo').value=r.eduMemo||'';
+  document.getElementById('f-study').value=r.study||'';
+  document.getElementById('f-memo').value=r.memo||'';
+  document.getElementById('add-record-btn').textContent='수정 완료';
+  document.getElementById('cancel-edit-btn').style.display='flex';
+  document.getElementById('add-page-title').textContent='봉사 기록 수정';
+  showPage('add');
+}
+
+function cancelEditRecord(){
+  editingRecordIdx=null;
+  resetTimeInputs();
+  document.getElementById('add-record-btn').textContent='저장';
+  document.getElementById('cancel-edit-btn').style.display='none';
+  document.getElementById('add-page-title').textContent='봉사 기록 추가';
+}
+
 
 // ── 월별 기록 ──
 function buildMonthSelect(){
@@ -678,7 +712,10 @@ function renderRecords(){
             <!-- 메모 -->
             ${r.memo?`<div style="font-size:12px;color:var(--text3);margin-top:4px;font-style:italic;line-height:1.4;">${r.memo}</div>`:''}
           </div>
-          <button class="btn-icon" onclick="deleteRecord(${idx})" style="margin-left:8px;flex-shrink:0;">
+          <button class="btn-icon" onclick="editRecord(${idx})" style="margin-left:8px;flex-shrink:0;">
+            <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="btn-icon" onclick="deleteRecord(${idx})" style="flex-shrink:0;">
             <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
           </button>
         </div>
@@ -875,7 +912,7 @@ function deleteVisit(personId,visitIdx){
 }
 
 // ── 초기화 ──
-buildTimeSelects();
+// (시간 입력은 이제 직접입력 방식)
 initCal();
 renderDashboard();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
