@@ -447,13 +447,8 @@ function refreshGoals(){
   const g=getGoals();
   MONTHLY_MIN=g.monthly;
   YEARLY_MIN=g.yearly;
-  // 연간 목표 섹션 보이기/숨기기
   const yearlySection=document.getElementById('yearly-section');
   if(yearlySection) yearlySection.style.display=g.showYearly?'':'none';
-  // 대시보드 다시 그리기
-  if(document.getElementById('page-dashboard').classList.contains('active')){
-    renderDashboard();
-  }
 }
 
 // ── 유틸 ──
@@ -641,6 +636,7 @@ function saveGoalSettings(){
   else localStorage.removeItem('p_username');
   localStorage.setItem('p_goal',JSON.stringify({type,monthly}));
   refreshGoals();
+  renderDashboard();
   const yearlyMsg=preset.showYearly?' / 연 목표: '+(monthly*12)+'시간':'';
   alert((name?name+'님 ':'')+'설정이 저장됐습니다!\n신분: '+preset.label+'\n월 목표: '+monthly+'시간'+yearlyMsg);
   showPage('dashboard');
@@ -678,7 +674,6 @@ function shareMonthReport(){
 }
 
 function renderDashboard(){
-  refreshGoals();
   const recs=loadRec(),people=loadPeople(),now=new Date();
   const curKey=now.getFullYear()+'-'+pad(now.getMonth()+1);
   const ms=sumMonth(recs,curKey);
