@@ -127,8 +127,16 @@ html,body{height:100%;background:var(--bg);color:var(--text1);font-family:-apple
 <body>
 <div id="app">
   <div class="header">
-    <h1>파이오니아 봉사기록</h1>
-    <p id="header-period"></p>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div>
+        <h1>파이오니아 봉사기록</h1>
+        <p id="header-period"></p>
+      </div>
+      <button onclick="forceRefresh()" style="background:none;border:.5px solid var(--border2);border-radius:20px;padding:6px 10px;cursor:pointer;color:var(--text2);font-family:inherit;display:flex;align-items:center;gap:4px;font-size:11px;">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        새로고침
+      </button>
+    </div>
   </div>
   <div class="content" id="main-content">
 
@@ -153,7 +161,7 @@ html,body{height:100%;background:var(--bg);color:var(--text1);font-family:-apple
       </div>
       <button onclick="shareMonthReport()" style="display:flex;align-items:center;gap:8px;width:100%;padding:12px 14px;background:var(--green-bg, #e1f5ee);color:var(--green-text, #0F6E56);border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:14px;justify-content:center;">
         <svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-        당월 보고서 공유
+        봉사보고
       </button>
       <div class="sec-title">봉사연도 누계 (9월~8월)</div>
       <div class="metric-grid">
@@ -501,7 +509,9 @@ function hideDetails(){document.querySelectorAll('.detail-page').forEach(p=>p.cl
 // ── 대시보드 ──
 function shareMonthReport(){
   const now=new Date();
-  const key=now.getFullYear()+'-'+pad(now.getMonth()+1);
+  // 전월 기준 (익월초에 전달 보고)
+  const prev=new Date(now.getFullYear(),now.getMonth()-1,1);
+  const key=prev.getFullYear()+'-'+pad(prev.getMonth()+1);
   const ms=sumMonth(loadRec(),key);
   const y=key.split('-')[0],m=parseInt(key.split('-')[1]);
   const people=loadPeople();
@@ -909,6 +919,21 @@ function deleteVisit(personId,visitIdx){
   const people=loadPeople(),idx=people.findIndex(p=>p.id===personId);
   if(idx<0)return;people[idx].visits.splice(visitIdx,1);
   savePeople(people);renderVisitHistory(people[idx]);
+}
+
+// ── 앱 새로고침 ──
+async function forceRefresh(){
+  try{
+    if('caches' in window){
+      const keys=await caches.keys();
+      await Promise.all(keys.map(k=>caches.delete(k)));
+    }
+    if('serviceWorker' in navigator){
+      const regs=await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r=>r.unregister()));
+    }
+  }catch(e){console.log('refresh error:',e)}
+  location.reload(true);
 }
 
 // ── 초기화 ──
