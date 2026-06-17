@@ -622,18 +622,24 @@ function loadSettingsPage(){
   onPioneerTypeChange();
 }
 function saveGoalSettings(){
+function saveGoalSettings(){
   const type=document.getElementById('pioneer-type').value;
-  let monthly,yearly;
-  if(type==='custom'){
-    monthly=parseInt(document.getElementById('custom-monthly').value)||50;
-    yearly=monthly*12;
+  const preset=PIONEER_PRESETS[type];
+  let monthly;
+  if(preset.adjustable){
+    monthly=parseInt(document.getElementById('custom-monthly').value);
+    if(!monthly){alert('월 목표시간을 입력해주세요');return}
   } else {
-    const p=PIONEER_PRESETS[type];
-    monthly=p.monthly;yearly=p.yearly;
+    monthly=preset.monthly;
   }
-  localStorage.setItem('p_goal',JSON.stringify({type,monthly,yearly}));
+  // 이름 저장
+  const name=document.getElementById('setting-name').value.trim();
+  if(name) localStorage.setItem('p_username',name);
+  else localStorage.removeItem('p_username');
+  localStorage.setItem('p_goal',JSON.stringify({type,monthly}));
   refreshGoals();
-  alert('저장됐습니다!\n월 목표: '+monthly+'시간 / 연 목표: '+yearly+'시간');
+  const yearlyMsg=preset.showYearly?' / 연 목표: '+(monthly*12)+'시간':'';
+  alert((name?name+'님 ':'')+'설정이 저장됐습니다!\n신분: '+preset.label+'\n월 목표: '+monthly+'시간'+yearlyMsg);
   showPage('dashboard');
 }
 // custom-monthly 입력 시 요약 업데이트
