@@ -145,7 +145,7 @@ html,body{height:100%;background:var(--bg);color:var(--text1);font-family:-apple
       <div class="sec-title">당월 현황</div>
       <div class="metric-grid">
         <div class="metric full">
-          <div class="label">당월 총 봉사시간 (목표 50시간)</div>
+          <div class="label" id="d-goal-label">당월 총 봉사시간 (목표 50시간)</div>
           <div class="val" id="d-total">0시간 0분</div>
           <div class="prog"><div class="prog-fill" id="d-bar" style="width:0%"></div></div>
           <div class="sub" id="d-remain"></div>
@@ -291,6 +291,40 @@ html,body{height:100%;background:var(--bg);color:var(--text1);font-family:-apple
       <div id="people-list"></div>
     </div>
 
+    <!-- 설정 -->
+    <div id="page-settings" class="page">
+      <div class="sec-title">개인 설정</div>
+      <div class="card">
+        <div style="font-size:13px;font-weight:600;margin-bottom:14px;">봉사 신분</div>
+        <div class="form-row">
+          <select id="pioneer-type" onchange="onPioneerTypeChange()" style="font-size:16px;padding:12px;">
+            <option value="regular">정규 파이오니아 (월 50시간)</option>
+            <option value="special">특별 파이오니아 (월 130시간)</option>
+            <option value="aux">보조 파이오니아 (월 30시간)</option>
+            <option value="custom">직접 설정</option>
+          </select>
+        </div>
+        <div id="custom-goal-row" style="display:none;">
+          <div class="form-row">
+            <label>월 목표시간 (시간)</label>
+            <input type="number" id="custom-monthly" min="1" max="300" placeholder="예) 50" inputmode="numeric">
+          </div>
+        </div>
+        <div id="goal-summary" style="background:var(--bg2);border-radius:10px;padding:12px;margin-top:4px;font-size:13px;color:var(--text2);line-height:2;">
+          <div>월 목표: <strong id="s-monthly" style="color:var(--text1);">50시간</strong></div>
+          <div>연 목표: <strong id="s-yearly" style="color:var(--text1);">600시간</strong></div>
+        </div>
+        <button class="btn-primary" onclick="saveGoalSettings()" style="margin-top:12px;">저장</button>
+      </div>
+      <div class="card" style="margin-top:4px;">
+        <div style="font-size:13px;font-weight:600;margin-bottom:14px;">앱</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;cursor:pointer;" onclick="forceRefresh()">
+          <span style="font-size:14px;">새로고침 (최신버전 확인)</span>
+          <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--text3);fill:none;stroke-width:2;flex-shrink:0"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <nav class="nav">
@@ -308,6 +342,9 @@ html,body{height:100%;background:var(--bg);color:var(--text1);font-family:-apple
     </button>
     <button onclick="showPage('people')" id="nav-people">
       <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>관심자
+    </button>
+    <button onclick="showPage('settings')" id="nav-settings">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>설정
     </button>
   </nav>
 </div>
@@ -376,8 +413,29 @@ html,body{height:100%;background:var(--bg);color:var(--text1);font-family:-apple
 
 <script>
 // ── 상수 ──
-const MONTHLY_MIN = 50*60; // 3000분
-const YEARLY_MIN  = 600*60;
+// ── 상수 (설정에서 동적 변경) ──
+const PIONEER_PRESETS = {
+  regular: { monthly: 50, yearly: 600, label: '정규 파이오니아' },
+  special: { monthly: 130, yearly: 1560, label: '특별 파이오니아' },
+  aux:     { monthly: 30,  yearly: 360,  label: '보조 파이오니아' },
+  custom:  { monthly: 50,  yearly: 600,  label: '직접 설정' }
+};
+function loadGoalSettings(){
+  try{return JSON.parse(localStorage.getItem('p_goal')||'null')}catch(e){return null}
+}
+function getGoals(){
+  const s=loadGoalSettings();
+  if(!s) return {monthly:50*60, yearly:600*60};
+  return {monthly:s.monthly*60, yearly:s.yearly*60};
+}
+let MONTHLY_MIN = getGoals().monthly;
+let YEARLY_MIN  = getGoals().yearly;
+
+function refreshGoals(){
+  const g=getGoals();
+  MONTHLY_MIN=g.monthly;
+  YEARLY_MIN=g.yearly;
+}
 
 // ── 유틸 ──
 function pad(n){return String(n).padStart(2,'0')}
@@ -496,14 +554,61 @@ function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
-  document.getElementById('nav-'+id).classList.add('active');
+  const navEl=document.getElementById('nav-'+id);
+  if(navEl)navEl.classList.add('active');
   document.getElementById('main-content').scrollTop=0;
   if(id==='dashboard')renderDashboard();
   if(id==='add')renderCal();
   if(id==='records')renderRecords();
   if(id==='yearly')renderYearly();
   if(id==='people')renderPeople();
+  if(id==='settings')loadSettingsPage();
 }
+
+// ── 설정 페이지 ──
+function onPioneerTypeChange(){
+  const type=document.getElementById('pioneer-type').value;
+  const isCustom=type==='custom';
+  document.getElementById('custom-goal-row').style.display=isCustom?'block':'none';
+  if(!isCustom){
+    const p=PIONEER_PRESETS[type];
+    document.getElementById('s-monthly').textContent=p.monthly+'시간';
+    document.getElementById('s-yearly').textContent=p.yearly+'시간';
+  } else {
+    const v=parseInt(document.getElementById('custom-monthly').value)||50;
+    document.getElementById('s-monthly').textContent=v+'시간';
+    document.getElementById('s-yearly').textContent=(v*12)+'시간';
+  }
+}
+function loadSettingsPage(){
+  const s=loadGoalSettings()||{type:'regular',monthly:50,yearly:600};
+  document.getElementById('pioneer-type').value=s.type||'regular';
+  document.getElementById('custom-monthly').value=s.monthly||50;
+  onPioneerTypeChange();
+}
+function saveGoalSettings(){
+  const type=document.getElementById('pioneer-type').value;
+  let monthly,yearly;
+  if(type==='custom'){
+    monthly=parseInt(document.getElementById('custom-monthly').value)||50;
+    yearly=monthly*12;
+  } else {
+    const p=PIONEER_PRESETS[type];
+    monthly=p.monthly;yearly=p.yearly;
+  }
+  localStorage.setItem('p_goal',JSON.stringify({type,monthly,yearly}));
+  refreshGoals();
+  alert('저장됐습니다!\n월 목표: '+monthly+'시간 / 연 목표: '+yearly+'시간');
+  showPage('dashboard');
+}
+// custom-monthly 입력 시 요약 업데이트
+document.addEventListener('input',function(e){
+  if(e.target.id==='custom-monthly'){
+    const v=parseInt(e.target.value)||0;
+    document.getElementById('s-monthly').textContent=v+'시간';
+    document.getElementById('s-yearly').textContent=(v*12)+'시간';
+  }
+});
 function hideDetails(){document.querySelectorAll('.detail-page').forEach(p=>p.classList.remove('active'))}
 
 // ── 대시보드 ──
@@ -533,11 +638,17 @@ function shareMonthReport(){
 }
 
 function renderDashboard(){
+  refreshGoals();
   const recs=loadRec(),people=loadPeople(),now=new Date();
   const curKey=now.getFullYear()+'-'+pad(now.getMonth()+1);
   const ms=sumMonth(recs,curKey);
   const pct=Math.min(Math.round(ms.total/MONTHLY_MIN*100),100);
   const diff=ms.total-MONTHLY_MIN;
+  // 목표 라벨 업데이트
+  const s=loadGoalSettings()||{type:'regular',monthly:50};
+  const preset=PIONEER_PRESETS[s.type]||PIONEER_PRESETS.regular;
+  const monthlyH=s.type==='custom'?s.monthly:preset.monthly;
+  document.getElementById('d-goal-label').textContent='당월 총 봉사시간 (목표 '+monthlyH+'시간)';
   document.getElementById('d-total').textContent=fmtTime(ms.total);
   document.getElementById('d-bar').style.width=pct+'%';
   document.getElementById('d-service').textContent=fmtShort(ms.service);
