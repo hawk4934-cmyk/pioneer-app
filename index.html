@@ -132,10 +132,13 @@ html,body{height:100%;background:var(--bg);color:var(--text1);font-family:-apple
         <h1>파이오니아 봉사기록</h1>
         <p id="header-period"></p>
       </div>
-      <button onclick="forceRefresh()" style="background:none;border:.5px solid var(--border2);border-radius:20px;padding:6px 10px;cursor:pointer;color:var(--text2);font-family:inherit;display:flex;align-items:center;gap:4px;font-size:11px;">
-        <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-        새로고침
-      </button>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+        <span id="header-username" style="font-size:13px;font-weight:600;color:var(--text1);"></span>
+        <button onclick="forceRefresh()" style="background:none;border:.5px solid var(--border2);border-radius:20px;padding:6px 10px;cursor:pointer;color:var(--text2);font-family:inherit;display:flex;align-items:center;gap:4px;font-size:11px;">
+          <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          새로고침
+        </button>
+      </div>
     </div>
   </div>
   <div class="content" id="main-content">
@@ -163,10 +166,12 @@ html,body{height:100%;background:var(--bg);color:var(--text1);font-family:-apple
         <svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
         봉사보고
       </button>
+      <div id="yearly-section">
       <div class="sec-title">봉사연도 누계 (9월~8월)</div>
       <div class="metric-grid">
         <div class="metric"><div class="label">연누계 총시간</div><div class="val" id="d-yearly">0h</div></div>
         <div class="metric"><div class="label">연 부족/잉여</div><div class="val" id="d-yearly-diff">-</div></div>
+      </div>
       </div>
       <div class="sec-title">관심자 현황</div>
       <div class="metric-grid">
@@ -295,24 +300,30 @@ html,body{height:100%;background:var(--bg);color:var(--text1);font-family:-apple
     <div id="page-settings" class="page">
       <div class="sec-title">개인 설정</div>
       <div class="card">
-        <div style="font-size:13px;font-weight:600;margin-bottom:14px;">봉사 신분</div>
+        <div class="form-row">
+          <label style="font-size:13px;font-weight:600;">이름</label>
+          <input type="text" id="setting-name" placeholder="이름을 입력하세요">
+        </div>
+      </div>
+      <div class="card" style="margin-top:4px;">
+        <div style="font-size:13px;font-weight:600;margin-bottom:14px;">봉사 신분 및 목표시간</div>
         <div class="form-row">
           <select id="pioneer-type" onchange="onPioneerTypeChange()" style="font-size:16px;padding:12px;">
             <option value="regular">정규 파이오니아 (월 50시간)</option>
-            <option value="special">특별 파이오니아 (월 130시간)</option>
-            <option value="aux">보조 파이오니아 (월 30시간)</option>
+            <option value="special">특별 파이오니아 (기본 90시간)</option>
+            <option value="aux">보조 파이오니아 (기본 30시간)</option>
             <option value="custom">직접 설정</option>
           </select>
         </div>
-        <div id="custom-goal-row" style="display:none;">
+        <div id="adjust-goal-row" style="display:none;">
           <div class="form-row">
-            <label>월 목표시간 (시간)</label>
-            <input type="number" id="custom-monthly" min="1" max="300" placeholder="예) 50" inputmode="numeric">
+            <label id="adjust-label">월 목표시간 (시간)</label>
+            <input type="number" id="custom-monthly" min="1" max="300" placeholder="예) 90" inputmode="numeric">
           </div>
         </div>
         <div id="goal-summary" style="background:var(--bg2);border-radius:10px;padding:12px;margin-top:4px;font-size:13px;color:var(--text2);line-height:2;">
           <div>월 목표: <strong id="s-monthly" style="color:var(--text1);">50시간</strong></div>
-          <div>연 목표: <strong id="s-yearly" style="color:var(--text1);">600시간</strong></div>
+          <div id="s-yearly-row">연 목표: <strong id="s-yearly" style="color:var(--text1);">600시간</strong></div>
         </div>
         <button class="btn-primary" onclick="saveGoalSettings()" style="margin-top:12px;">저장</button>
       </div>
@@ -415,18 +426,19 @@ html,body{height:100%;background:var(--bg);color:var(--text1);font-family:-apple
 // ── 상수 ──
 // ── 상수 (설정에서 동적 변경) ──
 const PIONEER_PRESETS = {
-  regular: { monthly: 50, yearly: 600, label: '정규 파이오니아' },
-  special: { monthly: 130, yearly: 1560, label: '특별 파이오니아' },
-  aux:     { monthly: 30,  yearly: 360,  label: '보조 파이오니아' },
-  custom:  { monthly: 50,  yearly: 600,  label: '직접 설정' }
+  regular: { monthly: 50,  yearly: 600,  label: '정규 파이오니아',  adjustable: false, showYearly: true },
+  special: { monthly: 90,  yearly: 1080, label: '특별 파이오니아',  adjustable: true,  showYearly: true },
+  aux:     { monthly: 30,  yearly: 360,  label: '보조 파이오니아',  adjustable: true,  showYearly: false },
+  custom:  { monthly: 50,  yearly: 600,  label: '직접 설정',        adjustable: true,  showYearly: true }
 };
 function loadGoalSettings(){
   try{return JSON.parse(localStorage.getItem('p_goal')||'null')}catch(e){return null}
 }
 function getGoals(){
   const s=loadGoalSettings();
-  if(!s) return {monthly:50*60, yearly:600*60};
-  return {monthly:s.monthly*60, yearly:s.yearly*60};
+  if(!s) return {monthly:50*60, yearly:600*60, showYearly:true};
+  const preset=PIONEER_PRESETS[s.type]||PIONEER_PRESETS.regular;
+  return {monthly:s.monthly*60, yearly:s.monthly*12*60, showYearly:preset.showYearly};
 }
 let MONTHLY_MIN = getGoals().monthly;
 let YEARLY_MIN  = getGoals().yearly;
@@ -435,6 +447,9 @@ function refreshGoals(){
   const g=getGoals();
   MONTHLY_MIN=g.monthly;
   YEARLY_MIN=g.yearly;
+  // 연간 목표 섹션 보이기/숨기기
+  const yearlySection=document.getElementById('yearly-section');
+  if(yearlySection) yearlySection.style.display=g.showYearly?'':'none';
 }
 
 // ── 유틸 ──
@@ -568,22 +583,39 @@ function showPage(id){
 // ── 설정 페이지 ──
 function onPioneerTypeChange(){
   const type=document.getElementById('pioneer-type').value;
-  const isCustom=type==='custom';
-  document.getElementById('custom-goal-row').style.display=isCustom?'block':'none';
-  if(!isCustom){
-    const p=PIONEER_PRESETS[type];
-    document.getElementById('s-monthly').textContent=p.monthly+'시간';
-    document.getElementById('s-yearly').textContent=p.yearly+'시간';
+  const preset=PIONEER_PRESETS[type];
+  const isAdjustable=preset.adjustable;
+  document.getElementById('adjust-goal-row').style.display=isAdjustable?'block':'none';
+  // 조정 가능한 경우 기본값 설정
+  if(isAdjustable){
+    const cur=parseInt(document.getElementById('custom-monthly').value)||preset.monthly;
+    if(!document.getElementById('custom-monthly').value)
+      document.getElementById('custom-monthly').value=preset.monthly;
+    document.getElementById('adjust-label').textContent=
+      type==='aux'?'월 목표시간 (시간, 보조는 매월 독립 목표)':'월 목표시간 (시간)';
+  }
+  // 요약 업데이트
+  updateGoalSummary();
+}
+function updateGoalSummary(){
+  const type=document.getElementById('pioneer-type').value;
+  const preset=PIONEER_PRESETS[type];
+  const monthly=preset.adjustable?(parseInt(document.getElementById('custom-monthly').value)||preset.monthly):preset.monthly;
+  document.getElementById('s-monthly').textContent=monthly+'시간';
+  if(preset.showYearly){
+    document.getElementById('s-yearly-row').style.display='';
+    document.getElementById('s-yearly').textContent=(monthly*12)+'시간';
   } else {
-    const v=parseInt(document.getElementById('custom-monthly').value)||50;
-    document.getElementById('s-monthly').textContent=v+'시간';
-    document.getElementById('s-yearly').textContent=(v*12)+'시간';
+    document.getElementById('s-yearly-row').style.display='none';
   }
 }
 function loadSettingsPage(){
-  const s=loadGoalSettings()||{type:'regular',monthly:50,yearly:600};
+  const s=loadGoalSettings()||{type:'regular',monthly:50};
   document.getElementById('pioneer-type').value=s.type||'regular';
-  document.getElementById('custom-monthly').value=s.monthly||50;
+  document.getElementById('custom-monthly').value=s.monthly||PIONEER_PRESETS[s.type||'regular'].monthly;
+  // 이름 불러오기
+  const name=localStorage.getItem('p_username')||'';
+  document.getElementById('setting-name').value=name;
   onPioneerTypeChange();
 }
 function saveGoalSettings(){
@@ -603,11 +635,7 @@ function saveGoalSettings(){
 }
 // custom-monthly 입력 시 요약 업데이트
 document.addEventListener('input',function(e){
-  if(e.target.id==='custom-monthly'){
-    const v=parseInt(e.target.value)||0;
-    document.getElementById('s-monthly').textContent=v+'시간';
-    document.getElementById('s-yearly').textContent=(v*12)+'시간';
-  }
+  if(e.target.id==='custom-monthly') updateGoalSummary();
 });
 function hideDetails(){document.querySelectorAll('.detail-page').forEach(p=>p.classList.remove('active'))}
 
@@ -672,6 +700,10 @@ function renderDashboard(){
   document.getElementById('d-p-study').textContent=people.filter(p=>p.type==='연구').length;
   const sy2=getServiceYear(now);
   document.getElementById('header-period').textContent=sy2+'~'+(sy2+1)+' 봉사연도';
+  // 이름 표시
+  const username=localStorage.getItem('p_username')||'';
+  const headerName=document.getElementById('header-username');
+  if(headerName) headerName.textContent=username?username+'님':'';
 }
 
 // ── 기록 저장/수정 ──
