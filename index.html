@@ -586,25 +586,26 @@ function onPioneerTypeChange(){
   const preset=PIONEER_PRESETS[type];
   const isAdjustable=preset.adjustable;
   document.getElementById('adjust-goal-row').style.display=isAdjustable?'block':'none';
-  // 조정 가능한 경우 기본값 설정
   if(isAdjustable){
-    const cur=parseInt(document.getElementById('custom-monthly').value)||preset.monthly;
-    if(!document.getElementById('custom-monthly').value)
-      document.getElementById('custom-monthly').value=preset.monthly;
+    // 입력창 비워서 직접 입력하게
+    document.getElementById('custom-monthly').value='';
+    document.getElementById('custom-monthly').placeholder=
+      type==='special'?'예) 90 (시간 직접 입력)':
+      type==='aux'?'예) 30 (시간 직접 입력)':'예) 50';
     document.getElementById('adjust-label').textContent=
-      type==='aux'?'월 목표시간 (시간, 보조는 매월 독립 목표)':'월 목표시간 (시간)';
+      type==='aux'?'월 목표시간 (보조는 매월 독립 목표)':'월 목표시간';
   }
-  // 요약 업데이트
   updateGoalSummary();
 }
 function updateGoalSummary(){
   const type=document.getElementById('pioneer-type').value;
   const preset=PIONEER_PRESETS[type];
-  const monthly=preset.adjustable?(parseInt(document.getElementById('custom-monthly').value)||preset.monthly):preset.monthly;
-  document.getElementById('s-monthly').textContent=monthly+'시간';
+  const inputVal=parseInt(document.getElementById('custom-monthly').value);
+  const monthly=preset.adjustable?(inputVal||null):preset.monthly;
+  document.getElementById('s-monthly').textContent=monthly?monthly+'시간':'입력 후 확인';
   if(preset.showYearly){
     document.getElementById('s-yearly-row').style.display='';
-    document.getElementById('s-yearly').textContent=(monthly*12)+'시간';
+    document.getElementById('s-yearly').textContent=monthly?(monthly*12)+'시간':'입력 후 확인';
   } else {
     document.getElementById('s-yearly-row').style.display='none';
   }
@@ -612,7 +613,9 @@ function updateGoalSummary(){
 function loadSettingsPage(){
   const s=loadGoalSettings()||{type:'regular',monthly:50};
   document.getElementById('pioneer-type').value=s.type||'regular';
-  document.getElementById('custom-monthly').value=s.monthly||PIONEER_PRESETS[s.type||'regular'].monthly;
+  // 조정 가능한 신분이면 저장된 값 표시, 아니면 비움
+  const loadedPreset=PIONEER_PRESETS[s.type||'regular'];
+  document.getElementById('custom-monthly').value=loadedPreset.adjustable?(s.monthly||''):'';
   // 이름 불러오기
   const name=localStorage.getItem('p_username')||'';
   document.getElementById('setting-name').value=name;
